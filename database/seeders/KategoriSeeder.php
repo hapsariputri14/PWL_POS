@@ -13,6 +13,7 @@ class KategoriSeeder extends Seeder
      */
     public function run(): void
     {
+        DB::table('m_kategori')->truncate();
         $data = [
             [
                 'kategori_id' => 1,
@@ -38,7 +39,7 @@ class KategoriSeeder extends Seeder
                 'kategori_id' => 5,
                 'kategori_kode' => 'YN005',
                 'kategori_nama' => 'Furniture ruang kerja',
-            ],
+            ]
         ];
         DB::table('m_kategori')->insert($data);
     }

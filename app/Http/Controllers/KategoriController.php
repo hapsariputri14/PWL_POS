@@ -2,29 +2,79 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTables\KategoriDataTable;
+use App\Models\KategoriModel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class KategoriController extends Controller
 {
-    public function index()
+    public function index(KategoriDataTable $dataTable)
     {
-        // $data = [
-        //     'kategori_kode' => 'SNK',
-        //     'kategori_nama' => 'Snack/Makanan Ringan',
-        //     'created_at' => now()
-        // ];
+        return $dataTable->render('kategori.index');
+    }
 
-        // DB::table('m_kategori')->insert($data);
-        // return 'Insert data baru berhasil';
+    public function create()
+    {
+        return view('kategori.create');
+    }
 
-        // $row = DB::table('m_kategori')->where('kategori_kode', 'SNK')->update(['kategori_nama' => 'Camilan']);
-        // return 'Update data berhasil. Jumlah data diupdate: ' . $row . ' baris';
+    public function store(Request $request)
+    {
+        $request->validate([
+            'kategori_kode' => 'required|unique:m_kategori,kategori_kode',
+            'kategori_nama' => 'required',
+        ]);
 
-        // $row = DB::table('m_kategori')->where('kategori_kode', 'SNK')->delete();
-        // return 'Delete data berhasil. Jumlah data yang dihapus: ' . $row . ' baris';
+        KategoriModel::create([
+            'kategori_kode' => $request->kategori_kode,
+            'kategori_nama' => $request->kategori_nama,
+        ]);
 
-        $data = DB::table('m_kategori')->get();
-        return view('kategori', ['data' => $data]);
+        return redirect()->route('kategori.index')
+            ->with('success', 'Kategori berhasil ditambahkan');
+    }
+
+    public function edit($id)
+    {
+        $kategori = KategoriModel::find($id);
+        return view('kategori.edit', compact('kategori'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'kategori_kode' => 'required|unique:m_kategori,kategori_kode,'.$id.',kategori_id',
+            'kategori_nama' => 'required',
+        ]);
+
+        $kategori = KategoriModel::find($id);
+        $kategori->update($request->all());
+
+        return redirect()->route('kategori.index')
+            ->with('success', 'Kategori berhasil diupdate.');
+    }
+    
+    public function destroy($id)
+    {
+        try {
+            $kategori = KategoriModel::find($id);
+            
+            if (!$kategori) {
+                return redirect()->route('kategori.index')
+                    ->with('error', 'Kategori tidak ditemukan');
+            }
+
+            $kategori->delete();
+
+            return redirect()->route('kategori.index')
+                ->with('success', 'Kategori berhasil dihapus');
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting kategori: ' . $e->getMessage());
+            return redirect()->route('kategori.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus kategori');
+        }
     }
 }
+
