@@ -12,7 +12,8 @@ class POSController extends Controller
      */
     public function index()
     {
-        $users = UserModel::all(); // Mengambil semua isi tabel
+        // Mengambil semua user dengan relasi level
+        $users = UserModel::with('level')->get();
         return view('users.index', compact('users'));
     }
      
