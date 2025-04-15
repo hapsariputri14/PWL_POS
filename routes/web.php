@@ -37,3 +37,6 @@ Route::get('/kategori/create', [KategoriController::class, 'create'])->name('kat
 Route::post('/kategori', [KategoriController::class, 'store'])->name('kategori.store');
 
 Route::resource('users', POSController::class);
+
+use App\Http\Controllers\WelcomeController;
+Route::get('/', [WelcomeController::class, 'index']);
