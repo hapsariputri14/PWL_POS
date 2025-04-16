@@ -5,7 +5,7 @@
     <div class="card-header">
         <h3 class="card-title">{{ $page->title }}</h3>
         <div class="card-tools">
-            <a class="btn btn-sm btn-primary mt-1" href="{{ url('kategori/create') }}">Tambah</a>
+            <a class="btn btn-sm btn-primary mt-1" href="{{ url('supplier/create') }}">Tambah</a>
         </div>
     </div>
     <div class="card-body">
@@ -15,9 +15,9 @@
         @if (session('error'))
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
-        <table class="table table-bordered table-striped table-hover table-sm" id="table_kategori">
+        <table class="table table-bordered table-striped table-hover table-sm" id="table_supplier">
             <thead>
-                <tr><th>ID</th><th>Kode Kategori</th><th>Nama Kategori</th><th>Aksi</th></tr>
+                <tr><th>ID</th><th>Nama Supplier</th><th>Alamat</th><th>Telepon</th><th>Aksi</th></tr>
             </thead>
         </table>
     </div>
@@ -30,10 +30,10 @@
 @push('js')
 <script>
     $(document).ready(function() {
-        var dataKategori = $('#table_kategori').DataTable({
+        var dataSupplier = $('#table_supplier').DataTable({
             serverSide: true,
             ajax: {
-                "url": "{{ url('kategori/list') }}", 
+                "url": "{{ url('supplier/list') }}", 
                 "dataType": "json",
                 "type": "POST"
             },
@@ -44,12 +44,17 @@
                     orderable: false, 
                     searchable: false
                 },{
-                    data: "kategori_kode", 
+                    data: "supplier_nama", 
                     className: "",
                     orderable: true, 
                     searchable: true
                 },{
-                    data: "kategori_nama",
+                    data: "supplier_alamat",
+                    className: "", 
+                    orderable: true, 
+                    searchable: true
+                },{
+                    data: "supplier_telp",
                     className: "", 
                     orderable: true, 
                     searchable: true
