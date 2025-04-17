@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\LevelModel;
-use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Validator;
 
 class LevelController extends Controller
 {
@@ -20,7 +20,9 @@ class LevelController extends Controller
             'title' => 'Daftar Level User'
         ];
 
-        return view('level.index', ['breadcrumb' => $breadcrumb, 'page' => $page]);
+        $activeMenu = 'level';
+
+        return view('level.index', ['breadcrumb' => $breadcrumb, 'page' => $page, 'activeMenu' => $activeMenu]);
     }
 
     public function list(Request $request)
@@ -30,11 +32,9 @@ class LevelController extends Controller
         return DataTables::of($levels)
             ->addIndexColumn()
             ->addColumn('aksi', function ($level) {
-                $btn = '<a href="'.url('/level/' . $level->level_id).'" class="btn btn-info btn-sm">Detail</a> ';
-                $btn .= '<a href="'.url('/level/' . $level->level_id . '/edit').'" class="btn btn-warning btn-sm">Edit</a> ';
-                $btn .= '<form class="d-inline-block" method="POST" action="'. url('/level/'.$level->level_id).'">'
-                        . csrf_field() . method_field('DELETE') .  
-                        '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Apakah Anda yakin menghapus data ini?\');">Hapus</button></form>';
+                $btn = '<a href="'.url('/level/' . $level->level_id).'" class="btn btn-sm btn-info">Detail</a> ';
+                $btn .= '<a href="'.url('/level/' . $level->level_id . '/edit').'" class="btn btn-sm btn-warning">Edit</a> ';
+                $btn .= '<button onclick="modalAction(\''.url('/level/'.$level->level_id.'/confirm_ajax').'\')" class="btn btn-sm btn-danger">Hapus</button>';
                 return $btn;
             })
             ->rawColumns(['aksi'])
@@ -52,7 +52,9 @@ class LevelController extends Controller
             'title' => 'Tambah Level User'
         ];
 
-        return view('level.create', ['breadcrumb' => $breadcrumb, 'page' => $page]);
+        $activeMenu = 'level';
+
+        return view('level.create', ['breadcrumb' => $breadcrumb, 'page' => $page, 'activeMenu' => $activeMenu]);
     }
 
     public function store(Request $request)
@@ -81,9 +83,11 @@ class LevelController extends Controller
             'title' => 'Detail Level User'
         ];
 
+        $activeMenu = 'level';
+
         $level = LevelModel::find($id);
 
-        return view('level.show', ['breadcrumb' => $breadcrumb, 'page' => $page, 'level' => $level]);
+        return view('level.show', ['breadcrumb' => $breadcrumb, 'page' => $page, 'level' => $level, 'activeMenu' => $activeMenu]);
     }
 
     public function edit($id)
@@ -97,9 +101,11 @@ class LevelController extends Controller
             'title' => 'Edit Level User'
         ];
 
+        $activeMenu = 'level';
+
         $level = LevelModel::find($id);
 
-        return view('level.edit', ['breadcrumb' => $breadcrumb, 'page' => $page, 'level' => $level]);
+        return view('level.edit', ['breadcrumb' => $breadcrumb, 'page' => $page, 'level' => $level, 'activeMenu' => $activeMenu]);
     }
 
     public function update(Request $request, $id)
@@ -124,6 +130,92 @@ class LevelController extends Controller
             return redirect('/level')->with('success', 'Data level berhasil dihapus');
         } catch (\Exception $e) {
             return redirect('/level')->with('error', 'Data level gagal dihapus karena masih digunakan');
+        }
+    }
+
+    // Ajax methods
+    public function create_ajax()
+    {
+        return view('level.create_ajax');
+    }
+
+    public function store_ajax(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'level_kode' => 'required|unique:m_level,level_kode',
+            'level_nama' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'msgField' => $validator->errors()
+            ]);
+        }
+
+        LevelModel::create([
+            'level_kode' => $request->level_kode,
+            'level_nama' => $request->level_nama,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data level berhasil disimpan'
+        ]);
+    }
+
+    public function edit_ajax($id)
+    {
+        $level = LevelModel::find($id);
+        return view('level.edit_ajax', ['level' => $level]);
+    }
+
+    public function update_ajax(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'level_kode' => 'required|unique:m_level,level_kode,'.$id.',level_id',
+            'level_nama' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'msgField' => $validator->errors()
+            ]);
+        }
+
+        LevelModel::find($id)->update([
+            'level_kode' => $request->level_kode,
+            'level_nama' => $request->level_nama,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data level berhasil diubah'
+        ]);
+    }
+
+    public function confirm_ajax($id)
+    {
+        $level = LevelModel::find($id);
+        return view('level.confirm_ajax', ['level' => $level]);
+    }
+
+    public function delete_ajax($id)
+    {
+        try {
+            LevelModel::find($id)->delete();
+            return response()->json([
+                'status' => true,
+                'message' => 'Data level berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data level gagal dihapus karena masih digunakan'
+            ]);
         }
     }
 }
