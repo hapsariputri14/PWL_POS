@@ -46,6 +46,7 @@ Route::middleware(['auth', 'authorize:ADM'])->group(function () {
 
     Route::get('/level/import', [LevelController::class, 'import']);
     Route::post('/level/import_ajax', [LevelController::class, 'import_ajax']);
+    Route::get('/level/export_excel', [LevelController::class, 'export_excel']);
     
     // User Management
     Route::get('/user', [UserController::class, 'index']);
@@ -58,6 +59,7 @@ Route::middleware(['auth', 'authorize:ADM'])->group(function () {
 
     Route::get('/user/import', [UserController::class, 'import']);
     Route::post('/user/import_ajax', [UserController::class, 'import_ajax']);
+    Route::get('/user/export_excel', [UserController::class, 'export_excel']);
 });
 
 // Route yang bisa diakses oleh Administrator dan Manager
@@ -72,10 +74,10 @@ Route::middleware(['auth', 'authorize:ADM,MNG'])->group(function () {
     Route::get('/barang/{id}/delete_ajax', [BarangController::class, 'confirm_ajax']);
     Route::delete('/barang/{id}/delete_ajax', [BarangController::class, 'delete_ajax']);
 
-    // Import Barang routes
     Route::get('/barang/import', [BarangController::class, 'import']);
     Route::post('/barang/import_ajax', [BarangController::class, 'import_ajax']);
-    
+    Route::get('/barang/export_excel', [BarangController::class, 'export_excel']);
+
     // Kategori Management
     Route::get('/kategori', [KategoriController::class, 'index']);
     Route::post('/kategori/list', [KategoriController::class, 'list']);
@@ -87,6 +89,7 @@ Route::middleware(['auth', 'authorize:ADM,MNG'])->group(function () {
 
     Route::get('/kategori/import', [KategoriController::class, 'import']);
     Route::post('/kategori/import_ajax', [KategoriController::class, 'import_ajax']);
+    Route::get('/kategori/export_excel', [KategoriController::class, 'export_excel']);
 });
 
 // // Route yang bisa diakses oleh Administrator, Manager, dan Staff
