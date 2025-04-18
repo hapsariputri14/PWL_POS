@@ -6,23 +6,22 @@ use Illuminate\Http\Request;
 use App\Models\LevelModel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class LevelController extends Controller
 {
     public function index()
     {
+        $activeMenu = 'level';
         $breadcrumb = (object) [
-            'title' => 'Daftar Level',
+            'title' => 'Data Level',
             'list' => ['Home', 'Level']
         ];
-
-        $page = (object) [
-            'title' => 'Daftar Level User'
-        ];
-
-        $activeMenu = 'level';
-
-        return view('level.index', ['breadcrumb' => $breadcrumb, 'page' => $page, 'activeMenu' => $activeMenu]);
+    
+        return view('level.index', [
+            'activeMenu' => $activeMenu,
+            'breadcrumb' => $breadcrumb
+        ]);
     }
 
     public function list(Request $request)
@@ -216,6 +215,65 @@ class LevelController extends Controller
                 'status' => false,
                 'message' => 'Data level gagal dihapus karena masih digunakan'
             ]);
+        }
+    }
+
+    // Menampilkan form import
+    public function import()
+    {
+        return view('level.import');
+    }
+    
+    // Proses import data Level
+    public function import_ajax(Request $request)
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            // Validasi file yang diupload
+            $rules = [
+                'file_level' => ['required', 'mimes:xlsx', 'max:1024'] // maksimal 1MB
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'status'   => false,
+                    'message'  => 'Validasi Gagal',
+                    'msgField' => $validator->errors()
+                ]);
+            }
+
+            $file = $request->file('file_level');
+            $reader = IOFactory::createReader('Xlsx');
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $data = $sheet->toArray(null, false, true, true);
+
+            $insert = [];
+            if (count($data) > 1) { // Lewati header
+                foreach ($data as $baris => $value) {
+                    if ($baris > 1) { // Lewati baris pertama yang merupakan header
+                        $insert[] = [
+                            'name'      => $value['A'],  // kolom A untuk nama level
+                            'created_at' => now(),
+                        ];
+                    }
+                }
+
+                if (count($insert) > 0) {
+                    Level::insertOrIgnore($insert); // Menyimpan data ke database
+                }
+
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Data level berhasil diimport'
+                ]);
+            } else {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Tidak ada data yang diimport'
+                ]);
+            }
         }
     }
 }

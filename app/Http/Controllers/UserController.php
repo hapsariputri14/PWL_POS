@@ -4,28 +4,29 @@ namespace App\Http\Controllers;
 use App\Models\LevelModel;
 use App\Models\UserModel;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
     // Menampilkan halaman awal user
     public function index()
     {
+        $activeMenu = 'user';
         $breadcrumb = (object) [
-            'title' => 'Daftar User',
+            'title' => 'Data User',
             'list' => ['Home', 'User']
         ];
-        
-        $page = (object) [
-            'title' => 'Daftar user yang terdaftar dalam sistem'
-        ];
-        
-        $activeMenu = 'user'; // set menu yang sedang aktif
 
-        $level = LevelModel::all(); // ambil data level untuk filter level
-    
-        return view('user.index', ['breadcrumb' => $breadcrumb, 'page' => $page, 'level' => $level, 'activeMenu' => $activeMenu]);
+        $level = LevelModel::select('level_id', 'level_nama')->get();
+
+        return view('user.index', [
+            'activeMenu' => $activeMenu,
+            'breadcrumb' => $breadcrumb,
+            'level' => $level
+        ]);
     }
 
     // Ambil data user dalam bentuk JSON untuk DataTables
@@ -35,16 +36,19 @@ class UserController extends Controller
                         ->with('level');
 
         // Filter data user berdasarkan level_id
-        if ($request->level_id) {
-            $users->where('level_id', $request->level_id);
+        $level_id = $request->input('filter_level');
+        if (!empty($level_id)) {
+            $users->where('level_id', $level_id);
         }
 
         return DataTables::of($users)
             ->addIndexColumn() // Menambahkan kolom index/no urut (default nama kolom: DT_RowIndex)
             ->addColumn('aksi', function ($user) {
-                $btn  = '<button onclick="modalAction(\'' . url('/user/' . $user->user_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/user/' . $user->user_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/user/' . $user->user_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button>';
+                $btn = '<a href="'.url('/user/' . $user->user_id).'" class="btn btn-sm btn-info">Detail</a> ';
+                $btn .= '<a href="'.url('/user/' . $user->user_id . '/edit').'" class="btn btn-sm btn-warning">Edit</a> ';
+                $btn .= '<form class="d-inline-block" method="POST" action="'. url('/user/'.$user->user_id).'">'
+                . csrf_field() . method_field('DELETE') .  
+                '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Apakah Anda yakin menghapus data ini?\');">Hapus</button></form>';
 
                 return $btn;
             })
@@ -290,5 +294,63 @@ class UserController extends Controller
         return redirect('/');
     }
 
+    public function import()
+    {
+        return view('user.import');
+    }
+    
+    public function import_ajax(Request $request)
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            $rules = [
+                'file_user' => ['required', 'mimes:xlsx', 'max:1024'] // maksimal 1MB
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'status'   => false,
+                    'message'  => 'Validasi Gagal',
+                    'msgField' => $validator->errors()
+                ]);
+            }
+
+            $file = $request->file('file_user');
+            $reader = IOFactory::createReader('Xlsx');
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $data = $sheet->toArray(null, false, true, true);
+
+            $insert = [];
+            if (count($data) > 1) {
+                foreach ($data as $baris => $value) {
+                    if ($baris > 1) { // Lewati header
+                        $insert[] = [
+                            'username'  => $value['A'],
+                            'nama'      => $value['B'],
+                            'password'  => bcrypt($value['C']),
+                            'level_id'  => (int) $value['D'],
+                            'created_at' => now(),
+                        ];
+                    }
+                }
+
+                if (count($insert) > 0) {
+                    UserModel::insertOrIgnore($insert);
+                }
+
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Data user berhasil diimport'
+                ]);
+            } else {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Tidak ada data yang diimport'
+                ]);
+            }
+        }
+    }
 }
 

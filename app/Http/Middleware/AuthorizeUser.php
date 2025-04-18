@@ -4,22 +4,28 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class AuthorizeUser
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)
      */
-    public function handle(Request $request, Closure $next, $role = ''): Response
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        $user = $request->user();              // ambil data user yg login
-                                               // fungsi user() diambil dari UserModel.php
-        if($user->hasRole($role)){             // cek apakah user punya role yg diinginkan
-            return $next($request);
+        if (!Auth::check()) {
+            return redirect('login');
         }
-
+    
+        $userRole = Auth::user()->getRole();
+        
+        foreach ($roles as $role) {
+            if ($userRole == $role) {
+                return $next($request);
+            }
+        }
         // jika tidak punya role, maka tampilkan error 403
         abort(403, 'Forbidden. Kamu tidak punya akses ke halaman ini');
     }
