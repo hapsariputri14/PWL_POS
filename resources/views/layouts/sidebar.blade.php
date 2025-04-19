@@ -11,10 +11,10 @@
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
-                <img src="{{ asset('adminlte/dist/img/user2-160x160.jpg') }}" class="img-circle elevation-2" alt="User Image">
+                <img src="{{ Auth::user()->photo ? asset('storage/profile_photos/' . Auth::user()->photo) : asset('adminlte/dist/img/user2-160x160.jpg') }}" class="img-circle elevation-2" alt="User Image">
             </div>
             <div class="info">
-                <a href="#" class="d-block">{{ Auth::user()->nama ?? 'Admin' }}</a>
+                <a href="{{ route('profile.index') }}" class="d-block">{{ Auth::user()->nama ?? 'Admin' }}</a>
             </div>
         </div>
 
@@ -26,6 +26,14 @@
                     <a href="{{ url('/') }}" class="nav-link {{ Request::is('/') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
                         <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <!-- Tambahkan menu profil -->
+                <li class="nav-item">
+                    <a href="{{ route('profile.index') }}" class="nav-link {{ Request::is('profile') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user"></i>
+                        <p>Profil Saya</p>
                     </a>
                 </li>
 

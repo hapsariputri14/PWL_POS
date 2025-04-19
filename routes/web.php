@@ -32,6 +32,11 @@ Route::post('register', [AuthController::class, 'postregister']);
 
 Route::middleware(['auth'])->group(function () { // artinya semua route di dalam group ini harus login dulu
 Route::get('/', [WelcomeController::class, 'index']);
+// Tambahkan route berikut di file routes/web.php
+
+Route::get('/profile', [App\Http\Controllers\UserProfileController::class, 'index'])->name('profile.index');
+Route::post('/profile/update-photo', [App\Http\Controllers\UserProfileController::class, 'updatePhoto'])->name('profile.update-photo');
+
 
 // Route yang hanya bisa diakses oleh Administrator
 Route::middleware(['auth', 'authorize:ADM'])->group(function () {
@@ -47,6 +52,7 @@ Route::middleware(['auth', 'authorize:ADM'])->group(function () {
     Route::get('/level/import', [LevelController::class, 'import']);
     Route::post('/level/import_ajax', [LevelController::class, 'import_ajax']);
     Route::get('/level/export_excel', [LevelController::class, 'export_excel']);
+    Route::get('/level/export_pdf', [LevelController::class, 'export_pdf']);
     
     // User Management
     Route::get('/user', [UserController::class, 'index']);
@@ -60,6 +66,7 @@ Route::middleware(['auth', 'authorize:ADM'])->group(function () {
     Route::get('/user/import', [UserController::class, 'import']);
     Route::post('/user/import_ajax', [UserController::class, 'import_ajax']);
     Route::get('/user/export_excel', [UserController::class, 'export_excel']);
+    Route::get('/user/export_pdf', [UserController::class, 'export_pdf']);
 });
 
 // Route yang bisa diakses oleh Administrator dan Manager
@@ -77,6 +84,7 @@ Route::middleware(['auth', 'authorize:ADM,MNG'])->group(function () {
     Route::get('/barang/import', [BarangController::class, 'import']);
     Route::post('/barang/import_ajax', [BarangController::class, 'import_ajax']);
     Route::get('/barang/export_excel', [BarangController::class, 'export_excel']);
+    Route::get('/barang/export_pdf', [BarangController::class, 'export_pdf']);
 
     // Kategori Management
     Route::get('/kategori', [KategoriController::class, 'index']);
@@ -90,7 +98,9 @@ Route::middleware(['auth', 'authorize:ADM,MNG'])->group(function () {
     Route::get('/kategori/import', [KategoriController::class, 'import']);
     Route::post('/kategori/import_ajax', [KategoriController::class, 'import_ajax']);
     Route::get('/kategori/export_excel', [KategoriController::class, 'export_excel']);
+    Route::get('/kategori/export_pdf', [KategoriController::class, 'export_pdf']);
 });
+
 
 // // Route yang bisa diakses oleh Administrator, Manager, dan Staff
 // Route::middleware(['auth', 'authorize:ADM,MNG,STF'])->group(function () {
